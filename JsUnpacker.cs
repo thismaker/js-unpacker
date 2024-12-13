@@ -32,9 +32,10 @@ namespace Thismaker.JsUnpacker
         }
 
         /// <summary>
-        /// Attempts to unpack the supplied packed JavaScript code
+        /// Attempts to unpack the supplied packed JavaScript code.
+        /// This method returns all available unpacked code.
         /// </summary>
-        public static IEnumerable<string> Unpack(string scriptBlock)
+        public static IEnumerable<string> UnpackAll(string scriptBlock)
         {
             if (!Detect(scriptBlock))
             {
@@ -51,15 +52,15 @@ namespace Thismaker.JsUnpacker
         /// </summary>
         public static List<string> Unpack(IEnumerable<string> scriptBlocks)
         {
-            return scriptBlocks.SelectMany(Unpack).ToList();
+            return scriptBlocks.SelectMany(UnpackAll).ToList();
         }
 
         /// <summary>
         /// Attempts to unpack the supplied JavaScript code and returns a single string or null if no packed code was detected.
         /// </summary>
-        public static string? UnpackAndCombine(string scriptBlock)
+        public static string? Unpack(string scriptBlock)
         {
-            var unpacked = Unpack(scriptBlock).ToList();
+            var unpacked = UnpackAll(scriptBlock).ToList();
 
             if (unpacked.Count == 0)
             {
