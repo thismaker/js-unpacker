@@ -67,7 +67,7 @@ namespace Thismaker.JsUnpacker
                 return null;
             }
 
-            return string.Join("\n", Unpack(scriptBlock));
+            return string.Join("\n", unpacked);
         }
 
         private static IEnumerable<string> PerformUnpack(string scriptBlock)
