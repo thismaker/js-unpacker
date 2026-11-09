@@ -1,53 +1,59 @@
-﻿namespace Thismaker.JsUnpacker
+namespace Thismaker.JsUnpacker
 {
     internal class Unbaser
     {
-        private readonly int _base;
-        private readonly int _selector;
+        private const string Alphanumeric = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        private static readonly Dictionary<int, string> Alphabet = new()
-        {
-            { 52, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP" },
-            { 54, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR" },
-            { 62, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" },
-            { 95, @" !\""#\$%&\\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~" }
-        };
+        private const string HighAscii = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
+        private readonly int _base;
+
+        private readonly Dictionary<char, int> _digits;
 
         public Unbaser(int baseValue)
         {
+            if (baseValue < 2 || baseValue > 95)
+            {
+                throw new ArgumentOutOfRangeException(nameof(baseValue));
+            }
+
             _base = baseValue;
-            _selector =
-                _base > 62 ? 95
-                : _base > 54 ? 62
-                : _base > 52 ? 54
-                : 52;
+
+            string alphabet = baseValue <= 62 ? Alphanumeric[..baseValue] : HighAscii;
+
+            _digits = alphabet
+                .Select((c, i) => (c, i))
+                .ToDictionary(x => x.c, x => x.i);
+        }
+
+        public bool TryUnbase(string value, out int result)
+        {
+            long total = 0;
+
+            foreach (char c in value)
+            {
+                if (!_digits.TryGetValue(c, out int digit) || digit >= _base)
+                {
+                    result = 0;
+                    return false;
+                }
+
+                total = total * _base + digit;
+
+                if (total > int.MaxValue)
+                {
+                    result = 0;
+                    return false;
+                }
+            }
+
+            result = (int)total;
+            return value.Length > 0;
         }
 
         public int Unbase(string value)
         {
-            if (_base >= 2 && _base < 36)
-            {
-                try
-                {
-                    return Convert.ToInt32(value, _base);
-                }
-                catch
-                {
-                    return 0;
-                }
-            }
-            else
-            {
-                var dict = Alphabet[_selector].ToDictionary(c => c, c => Alphabet[_selector].IndexOf(c));
-                var returnVal = 0;
-
-                foreach (var cipher in value.Reverse())
-                {
-                    returnVal += (int)(Math.Pow(_base, value.Length - 1 - value.IndexOf(cipher)) * dict[cipher]);
-                }
-
-                return returnVal;
-            }
+            return TryUnbase(value, out int result) ? result : 0;
         }
     }
 }

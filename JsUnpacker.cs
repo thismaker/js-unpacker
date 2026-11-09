@@ -76,8 +76,8 @@ namespace Thismaker.JsUnpacker
 
             foreach (Match match in matches)
             {
-                var payload = match.Groups[1].Value;
-                var symTab = match.Groups[4].Value.Split('|');
+                var payload = Unescape(match.Groups[1].Value);
+                var symTab = Unescape(match.Groups[4].Value).Split('|');
                 var radix = int.Parse(match.Groups[2].Value);
                 var count = int.Parse(match.Groups[3].Value);
 
@@ -86,31 +86,55 @@ namespace Thismaker.JsUnpacker
                 var unpacked = UnpackReplaceRegex().Replace(payload, m =>
                 {
                     var word = m.Value;
-                    var unbase = unbaser.Unbase(word);
 
-                    if (unbase < count)
+                    if (unbaser.TryUnbase(word, out int index)
+                        && index < count
+                        && index < symTab.Length
+                        && symTab[index].Length > 0)
                     {
-                        return symTab[unbase];
+                        return symTab[index];
                     }
-                    else
-                    {
-                        return word;
-                    }
+
+                    return word;
                 });
 
                 yield return unpacked;
-
             }
+        }
+
+        private static string Unescape(string value)
+        {
+            if (!value.Contains('\\'))
+            {
+                return value;
+            }
+
+            var builder = new System.Text.StringBuilder(value.Length);
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (value[i] == '\\' && i + 1 < value.Length && value[i + 1] is '\'' or '\\')
+                {
+                    builder.Append(value[i + 1]);
+                    i++;
+                }
+                else
+                {
+                    builder.Append(value[i]);
+                }
+            }
+
+            return builder.ToString();
         }
 
         [GeneratedRegex("eval[(]function[(]p,a,c,k,e,[r|d]?", RegexOptions.IgnoreCase | RegexOptions.Multiline, "en-GB")]
         
         private static partial Regex PackedRegex();
         
-        [GeneratedRegex("[}][(]'(.*)', *(\\d+), *(\\d+), *'(.*?)'[.]split[(]'[|]'[)]", RegexOptions.IgnoreCase | RegexOptions.Multiline, "en-GB")]
+        [GeneratedRegex("[}]\\s*[(]\\s*'((?:[^'\\\\]|\\\\.)*)'\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*'((?:[^'\\\\]|\\\\.)*)'[.]split[(]'[|]'[)]", RegexOptions.Singleline)]
         private static partial Regex PackedExtractRegex();
         
-        [GeneratedRegex("\\b\\w+\\b", RegexOptions.IgnoreCase | RegexOptions.Multiline, "en-GB")]
+        [GeneratedRegex("\\b[A-Za-z0-9_]+\\b")]
         private static partial Regex UnpackReplaceRegex();
     }
 }

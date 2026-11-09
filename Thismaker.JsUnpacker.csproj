@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-	<Version>1.0.1</Version>
+	<Version>1.0.2</Version>
 	<Authors>Thismaker</Authors>
 	<Description>Provides utility methods for unpacking JavaScript code packed with Dean Edwards' JavaScript packer.</Description>
 	<RepositoryUrl>https://github.com/thismaker/js-unpacker</RepositoryUrl>
